@@ -1,48 +1,76 @@
-package main
+// package main
 
-import (
-	"fmt"
-	"log"
+// import (
+// 	"context"
+// 	"log"
+// 	"strings"
 
-	"github.com/gocolly/colly"
-)
+// 	"github.com/chromedp/chromedp"
+// 	"github.com/gocolly/colly"
+// )
 
-func main() {
-	// fmt.Println("Hello, Go Project!")
+// func main() {
 
-	c := colly.NewCollector()
+// 	ctx, cancel := chromedp.NewContext(context.Background())
+// 	defer cancel()
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL)
-	})
+// 	var finalHTML string // 用于保存JS执行后的完整HTML
 
-	c.OnError(func(_ *colly.Response, err error) {
-		log.Println("Something went wrong:", err)
-	})
+// 	err := chromedp.Run(ctx,
+// 		chromedp.Navigate(`https://www.tcgplayer.com/search/all/product?view=grid`),
+// 		chromedp.WaitReady(`.product-card__product product-card__product-variant-a`), // 等待动态内容加载完成的关键选择器
+// 		chromedp.OuterHTML("html", &finalHTML),                                       // 获取整个文档的HTML
+// 	)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	// c.OnResponseHeaders(func(r *colly.Response) {
-	// 	fmt.Println("Visited", r.Request.URL)
-	// })
+// 	c := colly.NewCollector()
+// 	c.OnHTML(".product-card__product product-card__product-variant-a", func(e *colly.HTMLElement) {
+// 		// 现在可以像解析静态页面一样提取数据了
+// 		title := e.ChildText("h3")
+// 		log.Printf("标题: %s\n", title)
+// 	})
 
-	c.OnResponse(func(r *colly.Response) {
-		fmt.Println("Visited", r.Request.URL)
-	})
+// 	// 技巧：将HTML字符串"导入"Colly进行处理
+// 	err = c.ParseReader(strings.NewReader(finalHTML))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		e.Request.Visit(e.Attr("href"))
-	})
+// 	// // Instantiate default collector
+// 	// c := colly.NewCollector(
+// 	// // Visit only domains: hackerspaces.org, wiki.hackerspaces.org
+// 	// // colly.AllowedDomains("hackerspaces.org", "wiki.hackerspaces.org"),
+// 	// )
 
-	c.OnHTML("tr td:nth-of-type(1)", func(e *colly.HTMLElement) {
-		fmt.Println("First column of a table row:", e.Text)
-	})
+// 	// extensions.RandomUserAgent(c)
 
-	c.OnXML("//h1", func(e *colly.XMLElement) {
-		fmt.Println(e.Text)
-	})
+// 	// // On every a element which has href attribute call callback
+// 	// c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+// 	// 	link := e.Attr("href")
+// 	// 	// Print link
+// 	// 	fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+// 	// 	// Visit link found on page
+// 	// 	// Only those links are visited which are in AllowedDomains
+// 	// 	c.Visit(e.Request.AbsoluteURL(link))
+// 	// })
 
-	c.OnScraped(func(r *colly.Response) {
-		fmt.Println("Finished", r.Request.URL)
-	})
+// 	// // Before making a request print "Visiting ..."
+// 	// c.OnRequest(func(r *colly.Request) {
+// 	// 	fmt.Println("Visiting", r.URL.String())
+// 	// })
 
-	c.Visit("https://www.baidu.com")
-}
+// 	// c.OnResponse(func(r *colly.Response) {
+// 	// 	fmt.Println("%v: \n", string(r.Body))
+// 	// })
+// 	// // Set error handler
+// 	// c.OnError(func(r *colly.Response, err error) {
+// 	// 	fmt.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
+// 	// })
+
+// 	// // Start scraping on https://hackerspaces.org
+// 	// c.Visit("https://www.tcgplayer.com/search/all/product?view=grid")
+// 	// // c.Visit("https://en.wikipedia.org/")
+
+// }
