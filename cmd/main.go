@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/Liucan-Li/colly-demo/internal/dao"
-	"github.com/Liucan-Li/colly-demo/internal/dao/model"
 	"github.com/Liucan-Li/colly-demo/internal/gorm"
 	"github.com/Liucan-Li/colly-demo/internal/spider"
 )
@@ -10,10 +8,6 @@ import (
 func main() {
 	gorm.GormDB.Init()
 
-	v := &model.TcgCardOrigin{
-		OriginContent: `{"test": "测试1"}`,
-	}
+	spider.Spider.DoBatchScrawling()
 
-	dao.TcgCard.Create(v)
-	spider.Spider.DoScrawling()
 }
