@@ -1,6 +1,7 @@
-package main
+package spider
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -8,7 +9,21 @@ import (
 	"github.com/gocolly/colly"
 )
 
-func main() {
+type CardSpider struct{}
+
+var Spider = &CardSpider{}
+
+type CardInfo struct{}
+type Result struct {
+	Results []map[string]interface{}
+}
+
+type SpiderResponse struct {
+	Errors  []string
+	Results []Result
+}
+
+func (s *CardSpider) DoScrawling() {
 	// 创建Collector实例
 	c := colly.NewCollector()
 
@@ -17,7 +32,7 @@ func main() {
 		"accept":             []string{"application/json, text/plain, */*"},
 		"accept-language":    []string{"zh-CN,zh;q=0.9,en;q=0.8,und;q=0.7"},
 		"content-type":       []string{"application/json"},
-		"cookie":             []string{"tracking-preferences={%22version%22:1%2C%22destinations%22:{%22Actions%20Amplitude%22:true%2C%22AdWords%22:true%2C%22Google%20AdWords%20New%22:true%2C%22Google%20Enhanced%27Conversions%22:true%2C%22Google%20Tag%20Manager%22:true%2C%22Impact%20Partnership%20Cloud%22:true}%2C%22custom%22:{%22advertising%22:true%2C%22functional%22:true%2C%22marketingAndAnalytics%22:true}}; ajs_anonymous_id=8d02d26c-7b9e-4585-853b-182e643d2ecc; _gcl_au=1.1.2113232548.1765094966; _ga=GA1.1.440162287.1765094967; TCG_VisitorKey=183812f7-e6dd-4f67-bc88-224effdec23d; setting=CD=CN&M=1; SellerProximity=ZipCode=&MaxSellerDistance=1000&IsActive=false; SearchSortSettings=M=1&ProductSortOption=BestMatch&ProductSortDesc=False&PriceSortOption=Shipping&ProductResultDisplay=grid; analytics_session_id=1765893720049; _ga_JEQYTNS2WQ=GS2.1.s1765893734$o4$g0$t1765893734$j60$l0$h0; _ga_KK8XBGNYRB=GS2.1.s1765893734$o4$g0$t1765893734$j60$l0$h0; _ga_0T2XGBC5QN=GS2.1.s1765893734$o4$g0$t1765893734$j60$l0$h0; tcg-segment-session=1765893708684%257C1765893834560; analytics_session_id.last_access=1765893835356; _ga_VS9BE2Z3GY=GS2.1.s1765893721$o4$g1$t1765893835$j60$l0$h727653683"},
+		"cookie":             []string{`TCG_VisitorKey=04c2b2e7-7277-49c2-a57f-5c9202d1b3fd; tracking-preferences={%22version%22:1%2C%22destinations%22:{%22Actions%20Amplitude%22:true%2C%22AdWords%22:true%2C%22Google%20AdWords%20New%22:true%2C%22Google%20Enhanced%20Conversions%22:true%2C%22Google%20Tag%20Manager%22:true%2C%22Impact%20Partnership%20Cloud%22:true}%2C%22custom%22:{%22advertising%22:true%2C%22functional%22:true%2C%22marketingAndAnalytics%22:true}}; SellerProximity=ZipCode=&MaxSellerDistance=1000&IsActive=false; SearchSortSettings=M=1&ProductSortOption=BestMatch&ProductSortDesc=False&PriceSortOption=Shipping&ProductResultDisplay=grid; ajs_anonymous_id=789097fe-4e9b-4739-b384-a460e3e0d195; _gcl_au=1.1.1780692817.1766765206; _ga=GA1.1.135138769.1766765206; analytics_session_id=1766798327206; setting=CD=HK&M=1; SearchCriteria=M=1&WantVerifiedSellers=False&WantDirect=False&WantSellersInCart=False&WantWPNSellers=False; tcg-segment-session=1766798327208%257C1766798331008; analytics_session_id.last_access=1766798331081; _ga_VS9BE2Z3GY=GS2.1.s1766798328$o2$g1$t1766798331$j57$l0$h208256392`},
 		"origin":             []string{"https://www.tcgplayer.com"},
 		"priority":           []string{"u=1, i"},
 		"referer":            []string{"https://www.tcgplayer.com/"},
@@ -36,7 +51,14 @@ func main() {
 	// 设置响应处理回调
 	c.OnResponse(func(r *colly.Response) {
 		log.Printf("响应状态码: %d\n", r.StatusCode)
-		log.Printf("响应体: %s\n", string(r.Body))
+		// json.NewDecoder(r.Body.NewReader())
+		var res SpiderResponse
+		if err := json.Unmarshal(r.Body, &res); err != nil {
+			log.Printf("解析错误：%v", err)
+			return
+		}
+		log.Printf("响应体: %v\n", res)
+
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
