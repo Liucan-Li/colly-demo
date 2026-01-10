@@ -1,43 +1,37 @@
 package spider
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/Liucan-Li/colly-demo/internal/dao"
-	"github.com/Liucan-Li/colly-demo/internal/dao/model"
 	"github.com/gocolly/colly"
 	"github.com/gocolly/colly/extensions"
 )
 
-type CardSpider struct{}
+type SpiderProxy struct{}
 
-var Spider = &CardSpider{}
+var Proxy = &SpiderProxy{}
 
-type CardInfo struct{}
-type Result struct {
-	Results []map[string]interface{}
-}
-
-type SpiderResponse struct {
-	Errors  []string
-	Results []Result
-}
-
-func (s *CardSpider) DoScrawling(page int) {
+func (s *SpiderProxy) DoProxy(page int) {
 	// 创建Collector实例
 	c := colly.NewCollector()
 	// 设置随机UserAgent
 	extensions.RandomUserAgent(c)
 	// proxyList, _ := util.GetProxyList()
-	// proxySwitcher, _ := proxy.RoundRobinProxySwitcher(proxyList...)
-	// c.SetProxyFunc(proxySwitcher)
-	e := c.SetProxy("sock5://127.0.0.1:7897")
-	fmt.Println(e)
+
+	// rp, e := proxy.RoundRobinProxySwitcher(proxyList...)
+	// if e != nil {
+	// 	log.Fatal(e)
+	// }
+	// c.SetProxyFunc(rp)
+
+	c.SetProxy("https://221.202.27.194:10809")
+	// c.SetProxy("sock5://127.0.0.1:7897")
+
+	// fmt.Println(e)
 	// 设置请求头
 	headers := map[string][]string{
 		"accept":             {"application/json, text/plain, */*"},
@@ -64,36 +58,18 @@ func (s *CardSpider) DoScrawling(page int) {
 
 	// 设置响应处理回调
 	c.OnResponse(func(r *colly.Response) {
-		var res SpiderResponse
-		if err := json.Unmarshal(r.Body, &res); err != nil {
-			log.Printf("解析错误：%v", err)
-			return
-		}
+		// var res SpiderResponse
+		// if err := json.Unmarshal(r.Body, &res); err != nil {
+		// 	log.Printf("解析错误：%v", err)
+		// 	return
+		// }
 
-		if res.Results != nil {
-			for _, result := range res.Results {
-				if len(result.Results) == 0 {
-					log.Printf("空数据>>>>>>>>>>>>>>>>>>>>>>>")
-					continue
-				}
-				for _, contentInfo := range result.Results {
-					contentStr, _ := json.Marshal(contentInfo)
-					v := &model.TcgCardOrigin{
-						OriginContent: string(contentStr),
-					}
-
-					dao.TcgCard.Create(v)
-				}
-			}
-		}
-
-		log.Printf("请求成功: %d", page)
+		log.Printf("请求成功: ")
 
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
 		log.Printf("请求错误: %v\n; page: %d", err, page)
-		s.DoScrawling(page)
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -102,8 +78,8 @@ func (s *CardSpider) DoScrawling(page int) {
 
 	// 发送POST请求
 	err := c.Request(
-		"POST",
-		"https://mp-search-api.tcgplayer.com/v1/search/request?q=&isList=false&mpfev=4616",
+		"GET",
+		"https://httpbin.org/ip",
 		strings.NewReader(requestBody),
 		nil,
 		http.Header(headers),
@@ -117,9 +93,9 @@ func (s *CardSpider) DoScrawling(page int) {
 	c.Wait()
 }
 
-func (s *CardSpider) DoBatchScrawling() {
-	for i := 0; i < 551822; i++ {
-		go s.DoScrawling(i)
+func (s *SpiderProxy) DoBatchProxy() {
+	for i := 0; i < 10; i++ {
+		go s.DoProxy(i)
 		time.Sleep(2 * time.Second)
 	}
 }
